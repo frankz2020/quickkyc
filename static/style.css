@@ -1,0 +1,333 @@
+/* style.css */
+html {
+    height: 100%;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: auto;
+}
+
+#logo {
+    display: block;
+    margin: 0 auto; /* Centers the logo */
+    width: 5%;
+    height: auto; /* Keeps the aspect ratio */
+}
+
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    position: relative; /* Keep the container positioned relative to its normal position */
+    min-height: 50vh; /* Adjust as needed */
+    max-width: 80%; /* Consider responsiveness */
+    margin: 20px auto; /* Center the container */
+    overflow: auto; /* Change to auto for scrollable content */
+    flex-grow: 1; /* Allow container to grow and fill available space */
+}
+
+.uploaded-files {
+    margin: 20px auto;
+    max-width: 600px;
+    text-align: left;
+}
+
+button, input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+button:hover, input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+input[type="file"] {
+    margin-top: 20px;
+}
+
+li {
+    margin: 5px 0;
+    color: #555;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    padding-left: 20px; /* Add indent to the list */
+    text-align: left; /* Align items to the left */
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 0%;
+}
+
+h2 {
+    text-align: center; /* Align title to the left */
+    color: #333;
+    font-size: 1rem; /* Same size as body text */
+    font-weight: bold;
+}
+
+h3 {
+    text-align: left; /* Align title to the left */
+    font-size: 1rem; /* Same size as body text */
+    font-weight: bold;
+}
+
+/* Disabled button style */
+button.disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+.subtitle {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.instructions {
+    background-color: #f8f8f8;
+    color: #333;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    color: darkgrey; /* Dark grey text for instructions */
+    text-align: left; /* Align text to the left */
+    word-wrap: break-word; /* Prevents long words from stretching the container */
+    max-width: 95%;
+    margin: auto;
+}
+
+@media screen and (max-width: 768px) {
+    .container, .uploaded-files {
+        display: none; /* Hide main content on mobile devices */
+    }
+
+    .mobile-message {
+        display: block; /* Show mobile message */
+        text-align: center;
+        margin-top: 20px;
+        font-size: 1.2rem;
+    }
+}
+
+/* For non-mobile, hide the mobile message */
+.mobile-message {
+    display: none;
+}
+
+.remove-file-link {
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.remove-file-link:hover {
+    background-color: #ffebee;
+}
+
+.empty-row {
+    height: 20px;  /* Or any other height you prefer */
+}
+
+.forms-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px; /* Adjust spacing as needed */
+}
+
+.forms-container form {
+    margin-right: 10px; /* Space between forms */
+}
+
+/* Last form in the container should not have right margin */
+.forms-container form:last-child {
+    margin-right: 0;
+}
+
+.version-updates {
+    color: grey;
+    text-align: center;
+    font-size: 12px;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.rename-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin: 15px 0;
+}
+
+.rename-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.rename-option label {
+    color: #333;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* Center-align the form and its contents */
+#process-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* Style for the file input and buttons container */
+.input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+/* Style for buttons */
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+    min-width: 200px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button.disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Style for the upload button */
+.upload-btn {
+    background-color: #007bff;
+}
+
+/* Style for the process button */
+.process-btn {
+    background-color: #28a745;
+}
+
+/* Style for the file list */
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+/* Processing message style */
+#processing-message {
+    color: #666;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+/* Logo styling */
+.logo {
+    width: 50px;  /* Set specific width */
+    height: auto;
+    display: block;
+    margin: 20px auto;
+}
+
+/* Add hover effect for subtle interaction */
+.logo:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
+
+.alert {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.alert-error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.alert-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.debug-info {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* You can remove this later by changing display: none */
+.debug-info {
+    display: block;  /* Change to 'none' when you're done debugging */
+}
+
+.auth-section {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: right;
+}
+
+.login-btn, .logout-btn {
+    background: #28a745;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.hidden {
+    display: none;
+}

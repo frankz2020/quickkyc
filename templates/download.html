@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Download Starting...</title>
+    <!-- Add any required styles or scripts -->
+</head>
+<body>
+    <p>File download in progress...</p>
+
+    <script>
+        // Function to trigger file download
+        function triggerDownload() {
+            window.location.href = '/download_stream';
+        }
+    
+        // Redirect to the main page after a delay
+        setTimeout(function() {
+            window.location.href = '/';
+        }, 6000); // 6-second delay
+    
+        // Trigger the download when the page loads
+        window.onload = triggerDownload;
+    </script>
+</body>
+</html>

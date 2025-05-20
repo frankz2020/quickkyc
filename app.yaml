@@ -1,0 +1,26 @@
+runtime: python311
+instance_class: F1
+
+runtime_config:
+  python_version: 3.11
+  packages:
+    - boto3
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 1
+  target_cpu_utilization: 0.65
+  min_idle_instances: 0
+  max_idle_instances: 1
+  min_pending_latency: 500ms  # Increased to reduce instance spinning
+  max_pending_latency: automatic
+
+entrypoint: gunicorn -b :$PORT wsgi:app
+
+handlers:
+- url: /.*
+  script: auto
+  secure: always
+
+env_variables:
+  PYTHONUNBUFFERED: "true"

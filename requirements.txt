@@ -1,0 +1,9 @@
+Flask
+pdfplumber
+pandas
+xlsxwriter
+authlib
+requests
+werkzeug
+gunicorn==21.2.0
+boto3

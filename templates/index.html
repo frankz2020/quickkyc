@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WorldCheck Document Parser</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .close {
+            position: absolute;
+            right: 10px;
+            top: 5px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #555;
+        }
+
+        .modal-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            min-width: 120px;
+        }
+
+        .modal-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Add flash messages and debug info right here -->
+
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+        <h1>WorldCheck Document Parser</h1>
+        <h2>v2.0</h2>
+
+        <div class="auth-section">
+            {% if 'user' in session %}
+                <p>Logged in as: {{ session.user.email }} 
+                   <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+                </p>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+
+        <div class="instructions">
+            程序为辅助工作用途，不可替代人工检阅，使用者仍有审慎核查责任。目前该程序仅支持处理LSEG World-Check（原Refinitiv World-Check）检索报告，上传其他格式可能会报错。
+            请使用Chrome/Firefox/Edge浏览器运行该程序，其他浏览器（如微信浏览器）因兼容性问题可能无法使用该程序。文件在使用后会立即删除。使用前请登录。<br>
+        </div>
+        <!-- File input form -->
+        <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+            <div class="input-container">
+                <input type="file" id="fileInput" name="file" multiple accept=".pdf" 
+                       style="display: none;" onchange="handleFileSelect(event)">
+                <button type="button" onclick="document.getElementById('fileInput').click()" 
+                        class="choose-btn">
+                    Choose Files
+                </button>
+                <div id="uploadStatus"></div>
+            </div>
+        </form>
+
+        <div class="uploaded-files {% if not files_uploaded %}hidden{% endif %}">
+            <h3>Uploaded Files:</h3>
+            <div id="fileList">
+                {% for file in files %}
+                <div class="file-item" id="file-{{ loop.index }}">
+                    {{ file }}
+                    <a class="remove-file-link" onclick="removeFile('{{ file }}', '{{ loop.index }}')">×</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Form for triggering the main function -->
+        <form id="process-form" method="post" action="/run_main">
+            <div class="rename-option">
+                <input type="checkbox" id="rename-checkbox" name="rename" value="yes" checked>
+                <label for="rename-checkbox">Rename documents</label>
+            </div>
+            <button type="submit" 
+                    class="process-btn {{ 'disabled' if not files_uploaded else '' }}" 
+                    {{ 'disabled' if not files_uploaded else '' }}>
+                Process Documents
+            </button>
+            <div id="processing-message" style="display:none;">Processing, please wait...</div>
+        </form>
+    </div>
+
+    <div class="mobile-message">
+        请使用电脑浏览器运行<br>
+        v2.0 更新: 大改版
+    </div>
+
+    <!-- Login required modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
+            <h3>Login Required</h3>
+            <p>Please log in to process documents.</p>
+            <button class="modal-button" onclick="window.location.href='{{ url_for('login') }}'">Go to Login</button>
+        </div>
+    </div>
+
+    <script>
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            const uploadStatus = document.getElementById('uploadStatus');
+            const fileList = document.getElementById('fileList');
+            const uploadedFilesDiv = document.querySelector('.uploaded-files');
+            const processBtn = document.querySelector('.process-btn');
+            
+            // Add fade-out animation style
+            uploadStatus.style.transition = 'opacity 0.5s ease-in-out';
+            
+            Array.from(files).forEach(file => {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                uploadStatus.style.opacity = '1';
+                uploadStatus.innerHTML = `Uploading ${file.name}...`;
+                
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show uploaded files section
+                        uploadedFilesDiv.style.display = 'block';
+                        uploadedFilesDiv.classList.remove('hidden');
+                        
+                        // Enable process button
+                        if (processBtn) {
+                            processBtn.classList.remove('disabled');
+                            processBtn.removeAttribute('disabled');
+                        }
+                        
+                        // Add new file to list
+                        data.files.forEach(uploadedFile => {
+                            const div = document.createElement('div');
+                            div.className = 'file-item';
+                            div.id = `file-${Date.now()}`;
+                            div.innerHTML = `
+                                ${uploadedFile}
+                                <a class="remove-file-link" 
+                                   onclick="removeFile('${uploadedFile}', '${div.id}')">×</a>
+                            `;
+                            fileList.appendChild(div);
+                        });
+                        uploadStatus.innerHTML += `<br>${file.name} uploaded!`;
+                        
+                        // Fade out and clear the upload status after 2 seconds
+                        setTimeout(() => {
+                            uploadStatus.style.opacity = '0';
+                            setTimeout(() => {
+                                uploadStatus.innerHTML = '';
+                            }, 500); // Clear text after fade completes
+                        }, 2000);
+                    } else {
+                        uploadStatus.innerHTML += `<br>Failed to upload ${file.name}`;
+                        // Fade out error message after 3 seconds
+                        setTimeout(() => {
+                            uploadStatus.style.opacity = '0';
+                            setTimeout(() => {
+                                uploadStatus.innerHTML = '';
+                            }, 500);
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    uploadStatus.innerHTML += `<br>Error uploading ${file.name}`;
+                    // Fade out error message after 3 seconds
+                    setTimeout(() => {
+                        uploadStatus.style.opacity = '0';
+                        setTimeout(() => {
+                            uploadStatus.innerHTML = '';
+                        }, 500);
+                    }, 3000);
+                });
+            });
+        }
+
+        // Function to remove file
+        function removeFile(fileName, fileId) {
+            fetch('/remove_file', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({file: fileName})
+            }).then(response => {
+                if (response.ok) {
+                    const element = document.getElementById(fileId);
+                    if (element) {
+                        element.remove();
+                        
+                        // Check if there are any files left
+                        const fileItems = document.querySelectorAll('.file-item');
+                        const processBtn = document.querySelector('.process-btn');
+                        
+                        if (fileItems.length === 0) {
+                            // If no files left, disable process button and hide uploaded files section
+                            if (processBtn) {
+                                processBtn.classList.add('disabled');
+                                processBtn.setAttribute('disabled', '');
+                            }
+                            const uploadedFilesDiv = document.querySelector('.uploaded-files');
+                            uploadedFilesDiv.classList.add('hidden');
+                            window.location.reload();
+                        }
+                    }
+                }
+            });
+        }
+
+        // Show processing message when form is submitted
+        document.getElementById('process-form')?.addEventListener('submit', function(e) {
+            // Check if user is logged in
+            {# Check if user is not in session #}
+            {% if 'user' not in session %}
+                e.preventDefault();  // Prevent form submission
+                document.getElementById('loginModal').style.display = 'block';
+            {% else %}
+                document.getElementById('processing-message').style.display = 'block';
+            {% endif %}
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('loginModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Initially disable upload button
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadBtn = document.querySelector('.upload-btn');
+            if (uploadBtn) {
+                uploadBtn.disabled = true;
+                uploadBtn.classList.add('disabled');
+            }
+        });
+    </script>
+</body>
+</html>
