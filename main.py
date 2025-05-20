@@ -462,6 +462,7 @@ def organize_data(reports_dict):
     for pdf_file_path, report in reports_dict.items():
         # Skip if the report shouldn't be processed
         if not report.should_process:
+            print(f"Skipping {pdf_file_path} - not a valid WorldCheck report")
             continue
 
         # Initialize file_name if not set
@@ -471,21 +472,46 @@ def organize_data(reports_dict):
         if report.file_name.endswith(".pdf") and "CaseD" not in report.file_name:
             # Get report type to determine existence
             report_type = report.sort_type()
+            
+            # Skip CASE type reports
+            if report_type == "CASE":
+                print(f"Skipping {report.file_name} - CASE type report")
+                continue
+                
             exists = '是' if report_type == "FOUND" else '否'
             
-            report.read_details()
-            report.extract_name()
+            try:
+                report.read_details()
+                report.extract_name()
+            except Exception as e:
+                print(f"Error processing {report.file_name}: {str(e)}")
+                continue
 
             # Use the entity type detection
             if report.extracted_data.get('entity_type') == "individual":
                 data['filenames'].append(report.file_name.replace('.pdf',''))
                 data['names'].append(report.extracted_data.get('extracted_name', ''))
-                try:
-                    data['reports'].append(report.extracted_data.get('report_info', 'CHECK DATA'))
-                    data['bios'].append(report.extracted_data.get('bio_info', 'CHECK DATA'))
-                except:
-                    data['reports'].append("CHECK DATA")
-                    data['bios'].append("CHECK DATA")
+                
+                # For NO type reports, use empty strings for bio and report info
+                if report_type == "NO":
+                    data['reports'].append('')
+                    data['bios'].append('')
+                else:  # FOUND type
+                    try:
+                        report_info = report.extracted_data.get('report_info')
+                        bio_info = report.extracted_data.get('bio_info')
+                        
+                        if not report_info:
+                            print(f"Warning: No report info found for {report.file_name}")
+                        if not bio_info:
+                            print(f"Warning: No bio info found for {report.file_name}")
+                            
+                        data['reports'].append(report_info if report_info else 'CHECK DATA')
+                        data['bios'].append(bio_info if bio_info else 'CHECK DATA')
+                    except Exception as e:
+                        print(f"Error extracting report/bio info for {report.file_name}: {str(e)}")
+                        data['reports'].append("CHECK DATA")
+                        data['bios'].append("CHECK DATA")
 
                 data['exist'].append(exists)
                 data['position'].append('')
@@ -496,10 +522,19 @@ def organize_data(reports_dict):
             else:  # organization
                 data_company['filenames'].append(report.file_name.replace('.pdf',''))
                 data_company['names'].append(report.extracted_data.get('extracted_name', ''))
-                try:
-                    data_company['reports'].append(report.extracted_data.get('report_info', 'CHECK DATA'))
-                except:
-                    data_company['reports'].append("CHECK DATA")
+                
+                # For NO type reports, use empty strings for report info
+                if report_type == "NO":
+                    data_company['reports'].append('')
+                else:  # FOUND type
+                    try:
+                        report_info = report.extracted_data.get('report_info')
+                        if not report_info:
+                            print(f"Warning: No report info found for company {report.file_name}")
+                        data_company['reports'].append(report_info if report_info else 'CHECK DATA')
+                    except Exception as e:
+                        print(f"Error extracting report info for company {report.file_name}: {str(e)}")
+                        data_company['reports'].append("CHECK DATA")
 
                 data_company['exist'].append(exists)
                 data_company['relationship'].append('')

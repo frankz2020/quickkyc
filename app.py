@@ -46,14 +46,30 @@ except Exception as e:
 oauth = OAuth(app)
 
 # AWS Cognito Configuration
+def get_callback_url():
+    # Check if we're running in production (App Engine)
+    if os.getenv('GAE_ENV', '').startswith('standard'):
+        return os.getenv('PROD_CALLBACK_URL', 'https://kyc.smartibd.com')
+    # Check if we're running in a development environment
+    elif os.getenv('FLASK_ENV') == 'development':
+        return os.getenv('DEV_CALLBACK_URL', 'http://localhost:8080')
+    # Default to production URL if environment is not clearly defined
+    else:
+        return os.getenv('PROD_CALLBACK_URL', 'https://kyc.smartibd.com')
+
 AWS_COGNITO_CONFIG = {
-    "region": "us-east-2",
-    "user_pool_id": "us-east-2_KMV99nFc1",
-    "client_id": "2704pqi0p24dee1s8qe5at2j7i",
-    #"callback_url": os.getenv('COGNITO_CALLBACK_URL', 'http://localhost:8080'),
-    "callback_url": os.getenv('COGNITO_CALLBACK_URL', 'https://kyc.smartibd.com'),
-    "domain": "us-east-2kmv99nfc1.auth.us-east-2.amazoncognito.com"  # Keep original domain format
+    "region": os.getenv('COGNITO_REGION', 'us-east-2'),
+    "user_pool_id": os.getenv('COGNITO_USER_POOL_ID', 'us-east-2_KMV99nFc1'),
+    "client_id": os.getenv('COGNITO_CLIENT_ID', '2704pqi0p24dee1s8qe5at2j7i'),
+    "callback_url": get_callback_url(),
+    "domain": os.getenv('COGNITO_DOMAIN', 'us-east-2kmv99nfc1.auth.us-east-2.amazoncognito.com')
 }
+
+# Set Flask secret key from environment variable
+app.secret_key = os.getenv('FLASK_SECRET_KEY', '147d98b80bc9e3164f5ba8108db59a07')
+
+# Set upload folder from environment variable
+app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', '/tmp/worldcheck_uploads')
 
 # Register Cognito OIDC client
 oauth.register(
