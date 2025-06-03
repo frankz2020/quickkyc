@@ -210,6 +210,37 @@ button.disabled {
     align-items: center;
     gap: 10px;
     margin: 20px 0;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 40px 20px;
+    background-color: #f9fafb;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.input-container:hover {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+}
+
+.input-container.dragover {
+    border-color: #007bff;
+    background-color: #e6f3ff;
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.input-container p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #374151;
+    font-weight: 600;
+}
+
+.input-container small {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.9rem;
 }
 
 /* Style for buttons */
@@ -492,19 +523,13 @@ button.disabled {
 
 /* File drop area styling */
 #upload-form {
-    border: 2px dashed #ccc;
-    border-radius: 10px;
-    padding: 10px 50px;
     margin: 0 auto 20px auto; /* Center and reduce bottom margin */
     text-align: center;
     max-width: 100%;
-    background-color: #f9f9f9;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 #upload-form:hover {
-    background-color: #f0f0f0;
+    /* Remove hover styling since .input-container handles this now */
 }
 
 /* Style for the upload icon (if using Font Awesome) */

@@ -27,7 +27,7 @@ import logging
 import threading
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = '147d98b80bc9e3164f5ba8108db59a07'  # Set a secret key for security purposes
@@ -71,6 +71,12 @@ AWS_COGNITO_CONFIG = {
 
 # Set Flask secret key from environment variable
 app.secret_key = os.getenv('FLASK_SECRET_KEY', '147d98b80bc9e3164f5ba8108db59a07')
+
+# Configure session handling
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)  # 1 hour
 
 # Set upload folder from environment variable
 app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', '/tmp/worldcheck_uploads')
@@ -196,6 +202,9 @@ def authorize():
         userinfo = token.get('userinfo')
         if userinfo:
             session['user'] = userinfo
+            # Explicitly ensure session is saved before redirecting
+            session.permanent = True
+            session.modified = True
         return redirect(url_for('index'))
     except Exception as e:
         print(f"Authorization error: {str(e)}")
@@ -242,9 +251,6 @@ def upload_file():
 @app.route('/run_main', methods=['POST'])
 def run_main():
     if 'user' not in session:
-        # Check if this is an AJAX request
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
-            return jsonify({'success': False, 'message': 'Login required'}), 401
         return jsonify({'success': False, 'message': 'Login required'}), 401
     
     temp_dir = app.config['UPLOAD_FOLDER']

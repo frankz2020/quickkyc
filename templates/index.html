@@ -99,7 +99,7 @@
 
         <!-- File input form -->
         <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
-            <div class="input-container">
+            <div class="input-container" id="dropZone">
                 <p>Drop File(s) here</p>
                 <small>PDF Format up to 10MB</small>
                 <input type="file" id="fileInput" name="file" multiple accept=".pdf"
@@ -157,8 +157,60 @@
     </div>
 
     <script>
-        function handleFileSelect(event) {
-            const files = event.target.files;
+        // Drag and Drop functionality
+        const dropZone = document.getElementById('dropZone');
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight() {
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight() {
+            dropZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            // Filter for PDF files only
+            const pdfFiles = Array.from(files).filter(file => 
+                file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+            );
+            
+            if (pdfFiles.length !== files.length) {
+                alert('Only PDF files are allowed. Some files were ignored.');
+            }
+            
+            if (pdfFiles.length > 0) {
+                // Process the dropped PDF files
+                handleFileList(pdfFiles);
+            }
+        }
+
+        function handleFileList(files) {
             const uploadStatus = document.getElementById('uploadStatus');
             const fileList = document.getElementById('fileList');
             const uploadedFilesDiv = document.querySelector('.uploaded-files');
@@ -235,6 +287,11 @@
                     }, 3000);
                 });
             });
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            handleFileList(files);
         }
 
         // Function to remove file
