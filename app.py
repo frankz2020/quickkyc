@@ -24,6 +24,10 @@ import requests
 import boto3
 from functools import wraps
 import logging
+import threading
+import time
+import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = '147d98b80bc9e3164f5ba8108db59a07'  # Set a secret key for security purposes
@@ -88,6 +92,82 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Add before app initialization
 logging.basicConfig(level=logging.INFO)
+
+# In-memory job storage (for simple deployment - no external dependencies)
+active_jobs = {}
+job_lock = threading.Lock()
+
+def create_job(user_id=None):
+    """Create a new background job"""
+    job_id = str(uuid.uuid4())
+    with job_lock:
+        active_jobs[job_id] = {
+            'id': job_id,
+            'status': 'starting',
+            'progress': 0,
+            'message': 'Initializing...',
+            'created_at': datetime.now(),
+            'user_id': user_id,
+            'completed': False,
+            'error': None,
+            'result_path': None
+        }
+    return job_id
+
+def update_job_status(job_id, status=None, progress=None, message=None, error=None, result_path=None):
+    """Update job status"""
+    with job_lock:
+        if job_id in active_jobs:
+            job = active_jobs[job_id]
+            if status: job['status'] = status
+            if progress is not None: job['progress'] = progress
+            if message: job['message'] = message
+            if error: job['error'] = error
+            if result_path: job['result_path'] = result_path
+            if status == 'completed': job['completed'] = True
+
+def get_job_status(job_id):
+    """Get job status"""
+    with job_lock:
+        return active_jobs.get(job_id, None)
+
+def cleanup_old_jobs():
+    """Clean up jobs older than 1 hour"""
+    cutoff_time = datetime.now().timestamp() - 3600  # 1 hour
+    with job_lock:
+        jobs_to_remove = []
+        for job_id, job in active_jobs.items():
+            if job['created_at'].timestamp() < cutoff_time:
+                jobs_to_remove.append(job_id)
+        for job_id in jobs_to_remove:
+            del active_jobs[job_id]
+
+def background_processing(job_id, temp_dir, rename_option):
+    """Background processing function with detailed progress tracking"""
+    try:
+        update_job_status(job_id, status='processing', progress=5, message='Initializing processing...')
+        
+        update_job_status(job_id, status='processing', progress=10, message='Starting document analysis...')
+        
+        # Call the main processing function
+        __main__(temp_dir, rename=rename_option)
+        
+        update_job_status(job_id, status='processing', progress=90, message='Finalizing output...')
+        
+        # Check if zip file was created successfully
+        zip_file_path = os.path.join(temp_dir, 'finished.zip')
+        if os.path.exists(zip_file_path) and os.path.getsize(zip_file_path) >= 7 * 1024:
+            update_job_status(job_id, status='completed', progress=100, 
+                            message='Processing completed successfully!', 
+                            result_path=zip_file_path)
+        else:
+            update_job_status(job_id, status='error', progress=0, 
+                            error='Processing failed - output file not generated or too small')
+    
+    except Exception as e:
+        logging.error(f"Background processing error for job {job_id}: {str(e)}")
+        update_job_status(job_id, status='error', progress=0, 
+                        error=f'Processing failed: {str(e)}')
 
 def login_required(f):
     @wraps(f)
@@ -162,12 +242,84 @@ def upload_file():
 @app.route('/run_main', methods=['POST'])
 def run_main():
     if 'user' not in session:
+        # Check if this is an AJAX request
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': 'Login required'}), 401
         return jsonify({'success': False, 'message': 'Login required'}), 401
     
     temp_dir = app.config['UPLOAD_FOLDER']
     rename_option = request.form.get('rename', 'no')
-    __main__(temp_dir, rename=rename_option)
-    return redirect(url_for('download_compressed_files'))
+    
+    # Create and start background job
+    user_id = session['user'].get('sub', 'anonymous')
+    job_id = create_job(user_id)
+    
+    # Start background processing
+    thread = threading.Thread(target=background_processing, args=(job_id, temp_dir, rename_option))
+    thread.daemon = True  # Dies when main thread dies
+    thread.start()
+    
+    # Clean up old jobs
+    cleanup_old_jobs()
+    
+    # Return job ID for status tracking
+    return jsonify({
+        'success': True, 
+        'job_id': job_id,
+        'redirect_url': url_for('job_status', job_id=job_id)
+    })
+
+@app.route('/job_status/<job_id>')
+def job_status(job_id):
+    """Display job status page"""
+    job = get_job_status(job_id)
+    if not job:
+        flash('Job not found or expired', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('job_status.html', job=job)
+
+@app.route('/api/job_status/<job_id>')
+def api_job_status(job_id):
+    """API endpoint for job status"""
+    job = get_job_status(job_id)
+    if not job:
+        return jsonify({'error': 'Job not found'}), 404
+    
+    return jsonify(job)
+
+@app.route('/job_download/<job_id>')
+def job_download(job_id):
+    """Download results for completed job"""
+    job = get_job_status(job_id)
+    if not job:
+        flash('Job not found or expired', 'error')
+        return redirect(url_for('index'))
+    
+    if job['status'] != 'completed':
+        flash('Job not completed yet', 'warning')
+        return redirect(url_for('job_status', job_id=job_id))
+    
+    if not job['result_path'] or not os.path.exists(job['result_path']):
+        flash('Result file not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Serve the file and clean up
+    def remove_file_after_send():
+        try:
+            # Clean up the temp directory
+            temp_dir = os.path.dirname(job['result_path'])
+            cleanup_directory(temp_dir)
+            # Remove job from memory
+            with job_lock:
+                if job_id in active_jobs:
+                    del active_jobs[job_id]
+        except Exception as e:
+            logging.error(f"Error cleaning up after download: {e}")
+    
+    response = send_file(job['result_path'], as_attachment=True, download_name='finished.zip')
+    response.call_on_close(remove_file_after_send)
+    return response
 
 @app.route('/remove_file', methods=['POST'])
 def remove_file():

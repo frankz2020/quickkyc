@@ -152,7 +152,7 @@
             <span class="close" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
             <h3>Login Required</h3>
             <p>Please log in to process documents.</p>
-            <button class="modal-button" onclick="window.location.href='{{ url_for('login') }}'">Go to Login</button>
+            <button class="modal-button" id="loginButton">Go to Login</button>
         </div>
     </div>
 
@@ -272,15 +272,62 @@
 
         // Show processing message when form is submitted
         document.getElementById('process-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();  // Always prevent default form submission
+            
             // Check if user is logged in
             const isUserLoggedIn = document.body.dataset.loggedIn === 'true';
 
             if (!isUserLoggedIn) {
-                e.preventDefault();  // Prevent form submission
                 document.getElementById('loginModal').style.display = 'block';
-            } else {
-                document.getElementById('processing-message').style.display = 'block';
+                return;
             }
+
+            // Show processing message
+            document.getElementById('processing-message').style.display = 'block';
+            
+            // Disable the submit button to prevent double submission
+            const submitBtn = document.querySelector('.process-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Starting Background Processing...';
+            }
+
+            // Prepare form data
+            const formData = new FormData(this);
+
+            // Submit via AJAX
+            fetch('/run_main', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirect to job status page
+                    window.location.href = data.redirect_url;
+                } else {
+                    // Show error message
+                    alert('Failed to start processing: ' + (data.message || 'Unknown error'));
+                    
+                    // Re-enable submit button
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Process Files';
+                    }
+                    document.getElementById('processing-message').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while starting processing');
+                
+                // Re-enable submit button
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Process Files';
+                }
+                document.getElementById('processing-message').style.display = 'none';
+            });
         });
 
         // Close modal when clicking outside
@@ -297,6 +344,16 @@
             if (uploadBtn) {
                 uploadBtn.disabled = true;
                 uploadBtn.classList.add('disabled');
+            }
+        });
+
+        // Add login button handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', function() {
+                    window.location.href = '{{ url_for("login") }}';
+                });
             }
         });
     </script>
