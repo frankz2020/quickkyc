@@ -3,6 +3,10 @@
 <head>
     <title>WorldCheck Document Parser</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Modal styles */
         .modal {
@@ -58,39 +62,70 @@
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Add flash messages and debug info right here -->
+<body data-logged-in="{% if 'user' in session %}true{% else %}false{% endif %}">
+    <div class="navbar">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Numaira Logo" class="logo">
+        <div class="app-title">
+            <span class="app-name">QuickKYC</span> <span class="by-numaira">by Numaira</span>
+        </div>
 
-        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
-        <h1>WorldCheck Document Parser</h1>
-        <h2>v2.0</h2>
+        <div class="info-tooltip-container">
+            <span class="info-icon"><i class="fas fa-info-circle"></i></span>
+            <div class="tooltip-text">
+                程序为辅助工作用途，不可替代人工检阅，使用者仍有审慎核查责任。目前该程序仅支持处理LSEG World-Check（原Refinitiv World-Check）检索报告，上传其他格式可能会报错。
+                请使用Chrome/Firefox/Edge浏览器运行该程序，其他浏览器（如微信浏览器）因兼容性问题可能无法使用该程序。文件在使用后会立即删除。使用前请登录。<br>
+            </div>
+        </div>
 
         <div class="auth-section">
             {% if 'user' in session %}
-                <p>Logged in as: {{ session.user.email }} 
+                <p>Logged in as: {{ session.user.email }}
                    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
                 </p>
             {% else %}
-                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+                <a href="{{ url_for('login') }}" class="login-signup-btn">Login/Sign Up</a>
             {% endif %}
         </div>
+    </div>
 
-        <div class="instructions">
-            程序为辅助工作用途，不可替代人工检阅，使用者仍有审慎核查责任。目前该程序仅支持处理LSEG World-Check（原Refinitiv World-Check）检索报告，上传其他格式可能会报错。
-            请使用Chrome/Firefox/Edge浏览器运行该程序，其他浏览器（如微信浏览器）因兼容性问题可能无法使用该程序。文件在使用后会立即删除。使用前请登录。<br>
-        </div>
+    <!-- Instructions -->
+    {# Removed the hidden instructions div #}
+
+    <div class="container">
+        <!-- Add flash messages and debug info right here -->
+
+        <h1>Welcome to QuickKYC</h1> {# Main heading #}
+        <p class="intro-text">QuickKYC simplifies the KYC process by extracting key biographical data from third-party KYC reports. Currently supporting LSEG, QuickKYC automatically rename documents to match company naming standards and parse essential information—all in one click.</p> {# Descriptive text #}
+
         <!-- File input form -->
         <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
             <div class="input-container">
-                <input type="file" id="fileInput" name="file" multiple accept=".pdf" 
+                <p>Drop File(s) here</p>
+                <small>PDF Format up to 10MB</small>
+                <input type="file" id="fileInput" name="file" multiple accept=".pdf"
                        style="display: none;" onchange="handleFileSelect(event)">
-                <button type="button" onclick="document.getElementById('fileInput').click()" 
+                <button type="button" onclick="document.getElementById('fileInput').click()"
                         class="choose-btn">
-                    Choose Files
+                    Select File(s)
                 </button>
                 <div id="uploadStatus"></div>
             </div>
+        </form>
+
+        <!-- Form for triggering the main function -->
+        <form id="process-form" method="post" action="/run_main">
+            <div class="process-options">
+                <div class="rename-option">
+                    <input type="checkbox" id="rename-checkbox" name="rename" value="yes" checked>
+                    <label for="rename-checkbox">Rename Documents</label>
+                </div>
+                <button type="submit"
+                        class="process-btn {{ 'disabled' if not files_uploaded else '' }}"
+                        {{ 'disabled' if not files_uploaded else '' }}>
+                    Process Files
+                </button>
+            </div>
+            <div id="processing-message" style="display:none;">Processing, please wait...</div>
         </form>
 
         <div class="uploaded-files {% if not files_uploaded %}hidden{% endif %}">
@@ -104,20 +139,6 @@
                 {% endfor %}
             </div>
         </div>
-
-        <!-- Form for triggering the main function -->
-        <form id="process-form" method="post" action="/run_main">
-            <div class="rename-option">
-                <input type="checkbox" id="rename-checkbox" name="rename" value="yes" checked>
-                <label for="rename-checkbox">Rename documents</label>
-            </div>
-            <button type="submit" 
-                    class="process-btn {{ 'disabled' if not files_uploaded else '' }}" 
-                    {{ 'disabled' if not files_uploaded else '' }}>
-                Process Documents
-            </button>
-            <div id="processing-message" style="display:none;">Processing, please wait...</div>
-        </form>
     </div>
 
     <div class="mobile-message">
@@ -252,13 +273,14 @@
         // Show processing message when form is submitted
         document.getElementById('process-form')?.addEventListener('submit', function(e) {
             // Check if user is logged in
-            {# Check if user is not in session #}
-            {% if 'user' not in session %}
+            const isUserLoggedIn = document.body.dataset.loggedIn === 'true';
+
+            if (!isUserLoggedIn) {
                 e.preventDefault();  // Prevent form submission
                 document.getElementById('loginModal').style.display = 'block';
-            {% else %}
+            } else {
                 document.getElementById('processing-message').style.display = 'block';
-            {% endif %}
+            }
         });
 
         // Close modal when clicking outside
@@ -278,5 +300,15 @@
             }
         });
     </script>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Numaira. All Rights Reserved.</p>
+            <div class="social-icons">
+                <a href="#" target="_blank" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                <a href="mailto:#" class="social-icon"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

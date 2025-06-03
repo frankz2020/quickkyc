@@ -5,14 +5,16 @@ html {
 
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background-color: white;
     display: flex;
     flex-direction: column; /* Stack children vertically */
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start; /* Align content to the top */
+    align-items: center; /* Restore center alignment */
     min-height: 100vh;
     margin: 0;
-    overflow: auto;
+    overflow-y: auto; /* Allow vertical scrolling */
+    padding-top: 6vh; /* Use relative padding based on viewport height, adjusted */
+    padding-bottom: 20px; /* Add some padding at the bottom */
 }
 
 #logo {
@@ -24,16 +26,18 @@ body {
 
 .container {
     background-color: white;
-    padding: 20px;
+    /* padding: 20px 40px; *//* Increased horizontal padding */
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); *//* Removed box-shadow */
     text-align: center;
+    padding: 20px 5%; /* Use relative horizontal padding */
     position: relative; /* Keep the container positioned relative to its normal position */
     min-height: 50vh; /* Adjust as needed */
-    max-width: 80%; /* Consider responsiveness */
-    margin: 20px auto; /* Center the container */
+    max-width: 95%; /* Restore max-width */
+    margin: 20px auto; /* Restore auto margins for centering */
     overflow: auto; /* Change to auto for scrollable content */
     flex-grow: 1; /* Allow container to grow and fill available space */
+    margin-top: 30px; /* Add top margin to container equal to navbar height */
 }
 
 .uploaded-files {
@@ -46,9 +50,8 @@ button, input[type="submit"] {
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 20px;
     border-radius: 5px;
-    margin-top: 10px;
     cursor: pointer;
 }
 
@@ -104,16 +107,14 @@ button.disabled {
 
 .instructions {
     background-color: #f8f8f8;
-    color: #333;
+    color: #555;
     padding: 15px;
-    margin-bottom: 20px;
+    margin: 20px auto;
     border-radius: 5px;
-    font-size: 0.9rem;
-    color: darkgrey; /* Dark grey text for instructions */
-    text-align: left; /* Align text to the left */
-    word-wrap: break-word; /* Prevents long words from stretching the container */
-    max-width: 95%;
-    margin: auto;
+    font-size: 1rem;
+    text-align: center;
+    max-width: 800px;
+    line-height: 1.6;
 }
 
 @media screen and (max-width: 768px) {
@@ -137,14 +138,12 @@ button.disabled {
 .remove-file-link {
     color: #dc3545;
     cursor: pointer;
-    font-size: 0.9rem;
-    padding: 2px 8px;
-    border-radius: 3px;
-    transition: background-color 0.2s;
+    font-size: 1.2rem;
+    margin-left: 15px;
 }
 
 .remove-file-link:hover {
-    background-color: #ffebee;
+    color: #c82333;
 }
 
 .empty-row {
@@ -180,21 +179,19 @@ button.disabled {
 .rename-option {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 5px;
-    margin: 15px 0;
+    gap: 8px;
 }
 
 .rename-option input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    margin: 0;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
 }
 
 .rename-option label {
+    font-size: 1rem;
     color: #333;
-    font-size: 0.95rem;
-    margin: 0;
+    cursor: pointer;
 }
 
 /* Center-align the form and its contents */
@@ -252,17 +249,20 @@ button.disabled {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px;
-    margin: 5px 0;
-    background-color: #f8f9fa;
-    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    font-size: 1rem;
+    color: #333;
 }
 
 /* Processing message style */
 #processing-message {
     color: #666;
     font-style: italic;
-    margin-top: 10px;
+    margin-top: 15px;
+    font-size: 1rem;
 }
 
 /* Logo styling */
@@ -314,9 +314,6 @@ button.disabled {
 }
 
 .auth-section {
-    position: absolute;
-    top: 20px;
-    right: 20px;
     text-align: right;
 }
 
@@ -330,4 +327,284 @@ button.disabled {
 
 .hidden {
     display: none;
+}
+
+/* Navbar styling */
+.navbar {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ffffff; /* White background for the navbar */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow */
+    width: 100%; /* Full width navbar */
+    position: fixed; /* Fix the navbar to the top */
+    top: 0;
+    left: 0;
+    z-index: 100; /* Ensure it stays on top */
+    box-sizing: border-box; /* Include padding in the element's total width */
+    justify-content: flex-start; /* Align items to the start */
+    gap: 10px; /* Add a small gap between logo/title and auth section */
+}
+
+.navbar .logo {
+    width: 40px; /* Adjust logo size for navbar */
+    height: auto;
+    margin: 0; /* Remove margin */
+}
+
+.app-title {
+    display: flex;
+    align-items: baseline; /* Align text baselines */
+    gap: 5px; /* Space between Numaira and QuickKYC */
+    margin-left: 10px; /* Space after logo */
+}
+
+.app-title .app-name {
+    font-size: 1.5rem; /* Font size for QuickKYC */
+    font-weight: bold;
+    color: #333; /* Text color */
+    margin: 0;
+    padding: 0;
+    font-family: 'Source Sans 3', sans-serif; /* Apply Source Sans 3 */
+}
+
+.app-title .by-numaira {
+    font-size: 0.9rem; /* Smaller font size for by Numaira */
+    color: #555; /* Muted color */
+    margin: 0;
+    padding: 0;
+}
+
+.navbar h1 {
+    font-size: 1.5rem; /* Adjust font size */
+    margin: 0;
+    padding: 0;
+}
+
+.navbar .auth-section {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between buttons */
+    margin: 0; /* Remove margin */
+    margin-left: auto; /* Push auth section to the right */
+    position: static; /* Ensure it respects flexbox layout */
+    top: auto; /* Reset top */
+    right: auto; /* Reset right */
+}
+
+.navbar .auth-section p {
+    margin: 0;
+    color: #333;
+}
+
+/* Info tooltip styling */
+.info-tooltip-container {
+    position: relative; /* Container for absolute positioning of tooltip text */
+    display: inline-block; /* Needed for tooltip positioning */
+    margin-right: 10px; /* Space between tooltip and login button */
+    vertical-align: middle; /* Align tooltip with the middle of the login button */
+}
+
+.info-icon {
+    color: #007bff; /* Blue color for the info icon */
+    font-size: 1.2rem; /* Size of the info icon */
+    cursor: pointer; /* Indicate it's interactive */
+}
+
+.tooltip-text {
+    visibility: hidden; /* Hidden by default */
+    width: 300px; /* Width of the tooltip box */
+    background-color: #555; /* Dark background */
+    color: #fff; /* White text */
+    text-align: left; /* Left align text */
+    border-radius: 6px; /* Rounded corners */
+    padding: 10px; /* Padding inside the tooltip */
+    position: absolute; /* Position absolutely */
+    z-index: 1; /* Ensure it's above other content */
+    top: 125%; /* Position below the icon */
+    left: 50%; /* Center horizontally relative to the icon */
+    margin-left: -150px; /* Adjust to perfectly center */
+    opacity: 0; /* Start with opacity 0 */
+    transition: opacity 0.3s;
+    pointer-events: none; /* Allow clicks to pass through when hidden */
+    word-wrap: break-word; /* Break long words */
+    white-space: normal; /* Allow text wrapping */
+}
+
+.info-tooltip-container:hover .tooltip-text {
+    visibility: visible; /* Show on hover */
+    opacity: 1; /* Fade in */
+    pointer-events: auto; /* Enable interaction when visible */
+}
+
+/* Arrow for the tooltip (optional but good for clarity) */
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    bottom: 100%; /* At the top of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #555 transparent; /* Arrow color */
+}
+
+/* Button styling for Login/Sign Up */
+.navbar .login-signup-btn {
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    padding: 8px 15px; /* Padding */
+    border-radius: 4px; /* Rounded corners */
+    text-decoration: none; /* Remove underline */
+    font-size: 0.9rem; /* Font size */
+    transition: background-color 0.2s ease; /* Smooth hover effect */
+    display: inline-block; /* Ensure it behaves like a button */
+}
+
+.navbar .login-signup-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Remove old button styles that hid the link */
+.navbar .login-btn,
+.navbar .sign-up-btn {
+    display: none !important; /* Ensure these are hidden if they somehow reappear */
+}
+
+/* Main content styling */
+.container h1 {
+    font-size: 1.8rem; /* Larger font size for the main heading */
+    color: #333; /* Dark color for the heading */
+    margin-top: 0; /* No top margin, as body padding handles space */
+    margin-bottom: 15px; /* Space below the heading */
+    text-align: center; /* Center the heading */
+    font-family: 'Source Sans 3', sans-serif; /* Apply Source Sans 3 */
+}
+
+.intro-text {
+    font-size: 1rem; /* Standard font size for intro text */
+    color: #555; /* Muted color for text */
+    margin: 0 auto 20px auto; /* Center and reduce bottom margin */
+    max-width: 700px; /* Max width for readability */
+    text-align: justify; /* Center the text */
+    line-height: 1.6; /* Improved readability */
+}
+
+/* File drop area styling */
+#upload-form {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 10px 50px;
+    margin: 0 auto 20px auto; /* Center and reduce bottom margin */
+    text-align: center;
+    max-width: 100%;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#upload-form:hover {
+    background-color: #f0f0f0;
+}
+
+/* Style for the upload icon (if using Font Awesome) */
+#upload-form i.fas.fa-arrow-up {
+    font-size: 2rem;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+#upload-form p {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+#upload-form small {
+    display: block;
+    color: #777;
+    margin-bottom: 20px;
+}
+
+#upload-form .choose-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+#upload-form .choose-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Process options styling (horizontal layout) */
+.process-options {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center horizontally */
+    gap: 20px; /* Space between rename option and process button */
+    margin-top: 0px; /* Space above this section */
+}
+
+.process-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.2s ease;
+}
+
+.process-btn:hover:not(.disabled) {
+    background-color: #218838;
+}
+
+.process-btn.disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+/* Footer styling */
+footer {
+    margin-top: auto; /* Push the footer to the bottom */
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+    background-color: #f8f8f8; /* Light background for footer */
+    color: #555; /* Text color */
+    font-size: 0.9rem;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: center; /* Center content horizontally */
+    align-items: center;
+    gap: 20px; /* Space between copyright and social icons */
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px; /* Space between social icons */
+}
+
+.social-icon i {
+    color: #555; /* Icon color */
+    font-size: 1.2rem; /* Icon size */
+    transition: color 0.3s ease; /* Smooth color transition on hover */
+}
+
+.social-icon i:hover {
+    color: #007bff; /* Change color on hover */
+}
+
+/* Ensure the main container takes up remaining space */
+.container {
+    flex-grow: 1;
 }
