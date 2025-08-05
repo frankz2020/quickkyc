@@ -178,7 +178,11 @@ def background_processing(job_id, temp_dir, rename_option):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user' not in session:
+        # Skip authentication for local development
+        is_local = (os.getenv('FLASK_ENV') == 'development' or 
+                    not os.getenv('GAE_ENV', '').startswith('standard'))
+        
+        if not is_local and 'user' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -250,14 +254,18 @@ def upload_file():
 
 @app.route('/run_main', methods=['POST'])
 def run_main():
-    if 'user' not in session:
+    # Skip authentication for local development
+    is_local = (os.getenv('FLASK_ENV') == 'development' or 
+                not os.getenv('GAE_ENV', '').startswith('standard'))
+    
+    if not is_local and 'user' not in session:
         return jsonify({'success': False, 'message': 'Login required'}), 401
     
     temp_dir = app.config['UPLOAD_FOLDER']
     rename_option = request.form.get('rename', 'no')
     
     # Create and start background job
-    user_id = session['user'].get('sub', 'anonymous')
+    user_id = session.get('user', {}).get('sub', 'anonymous') if 'user' in session else 'local_user'
     job_id = create_job(user_id)
     
     # Start background processing
@@ -402,8 +410,12 @@ def gateway_error(e):
     return 'Bad gateway error occurred.', 502
     
 if __name__ == '__main__':
+    # Automatically set development environment when running locally
+    if not os.getenv('FLASK_ENV'):
+        os.environ['FLASK_ENV'] = 'development'
+    
     port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)  # Set debug=False in production
+    app.run(host='0.0.0.0', port=port, debug=True)  # Enable debug for local development
 
 '''
 FLASK

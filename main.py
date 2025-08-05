@@ -119,8 +119,25 @@ class CaseReport:
             identification_index = self.text.find("IDENTIFICATION")
             
             if reports_index != -1 and identification_index != -1:
-                self.extracted_data['bio_info'] = self.text[biography_indices[1] + len("BIOGRAPHY"):reports_index].strip()
-                self.extracted_data['report_info'] = self.text[reports_index + len("REPORTS"):identification_index].strip()
+                # Bio Info: From 2nd BIOGRAPHY occurrence → IDENTIFICATION
+                self.extracted_data['bio_info'] = self.text[biography_indices[1] + len("BIOGRAPHY"):identification_index].strip()
+                
+                # Report Info: From REPORTS → CONNECTIONS/RELATIONSHIPS
+                connections_index = self.text.find("CONNECTIONS")
+                relationships_index = self.text.find("RELATIONSHIPS")
+                
+                # Use whichever section exists (CONNECTIONS or RELATIONSHIPS)
+                next_section_index = -1
+                if connections_index != -1:
+                    next_section_index = connections_index
+                elif relationships_index != -1:
+                    next_section_index = relationships_index
+                
+                if next_section_index != -1:
+                    self.extracted_data['report_info'] = self.text[reports_index + len("REPORTS"):next_section_index].strip()
+                else:
+                    # Fallback to old structure if CONNECTIONS/RELATIONSHIPS not found
+                    self.extracted_data['report_info'] = self.text[reports_index + len("REPORTS"):identification_index].strip()
 
         # Add entity type detection
         self.extracted_data['entity_type'] = self._detect_entity_type()
@@ -313,12 +330,29 @@ class CaseReport:
             return
 
         # Extract the desired text
-        extracted_text1 = self.text[biography_indices[1] + len("BIOGRAPHY"):reports_index].strip().replace("\n", " ")
-        extracted_text2 = self.text[reports_index + len("REPORTS"):identification_index].strip().replace("\n", " ")
+        # Bio Info: From 2nd BIOGRAPHY occurrence → IDENTIFICATION
+        extracted_text1 = self.text[biography_indices[1] + len("BIOGRAPHY"):identification_index].strip().replace("\n", " ")
+        
+        # Report Info: From REPORTS → CONNECTIONS/RELATIONSHIPS
+        connections_index = self.text.find("CONNECTIONS")
+        relationships_index = self.text.find("RELATIONSHIPS")
+        
+        # Use whichever section exists (CONNECTIONS or RELATIONSHIPS)
+        next_section_index = -1
+        if connections_index != -1:
+            next_section_index = connections_index
+        elif relationships_index != -1:
+            next_section_index = relationships_index
+        
+        if next_section_index != -1:
+            extracted_text2 = self.text[reports_index + len("REPORTS"):next_section_index].strip().replace("\n", " ")
+        else:
+            # Fallback to old structure if CONNECTIONS/RELATIONSHIPS not found
+            extracted_text2 = self.text[reports_index + len("REPORTS"):identification_index].strip().replace("\n", " ")
 
-        print("Extracted Text 1:")
+        print("Extracted Text 1 (Bio Info):")
         print(extracted_text1)
-        print("Extracted Text 2:")
+        print("Extracted Text 2 (Report Info):")
         print(extracted_text2)
 
         # Optionally, you can assign the extracted text to instance variables for later use
